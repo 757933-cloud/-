@@ -477,5 +477,18 @@ textarea:focus { border-color: var(--accent-soft); }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+/* Анимация переключения периода */
+.calendar-month, .calendar-year { touch-action: pan-y; }
+@keyframes slideFromRight {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+@keyframes slideFromLeft {
+  from { transform: translateX(-24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+.slide-from-right { animation: slideFromRight .22s ease; }
+.slide-from-left  { animation: slideFromLeft .22s ease; }
+
 /* Утилиты */
 .hidden-soft { visibility: hidden; }

@@ -225,7 +225,37 @@
       cursor = new Date(cursor.getFullYear() + delta, 0, 1);
     }
     renderCalendar();
+    animateSlide(delta < 0 ? 'right' : 'left');
   }
+
+  function animateSlide(from) {
+    const el = view === 'month' ? document.getElementById('calendar-month') : document.getElementById('calendar-year');
+    el.classList.remove('slide-from-left', 'slide-from-right');
+    void el.offsetWidth;
+    el.classList.add(from === 'left' ? 'slide-from-right' : 'slide-from-left');
+  }
+
+  // Свайпы по календарю
+  function attachSwipe(el) {
+    let sx = 0, sy = 0, st = 0, on = false;
+    el.addEventListener('touchstart', (e) => {
+      if (e.touches.length !== 1) return;
+      const t = e.touches[0];
+      sx = t.clientX; sy = t.clientY; st = Date.now(); on = true;
+    }, { passive: true });
+    el.addEventListener('touchend', (e) => {
+      if (!on) return;
+      on = false;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - sx, dy = t.clientY - sy, dt = Date.now() - st;
+      if (dt > 600) return;
+      if (Math.abs(dx) < 60) return;
+      if (Math.abs(dx) < Math.abs(dy) * 1.5) return;
+      navigate(dx > 0 ? -1 : 1);
+    }, { passive: true });
+  }
+  attachSwipe(document.getElementById('calendar-month'));
+  attachSwipe(document.getElementById('calendar-year'));
 
   // ───── Рендер календаря ─────
   function emojiFor(level) { return level === 1 ? '🤍' : level === 2 ? '🩷' : level === 3 ? '❤️‍🔥' : ''; }

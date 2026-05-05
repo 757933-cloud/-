@@ -192,9 +192,9 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
 }
 .day .cycle-mark {
   position: absolute;
-  bottom: 2px;
-  left: 5px;
-  font-size: 12px;
+  bottom: 8px;
+  left: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: #DC3545;
   line-height: 1;

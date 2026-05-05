@@ -162,6 +162,10 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
   line-height: 1;
   pointer-events: none;
 }
+.day .emoji.l3 {
+  font-size: 30px;
+  filter: drop-shadow(0 1px 3px rgba(232, 120, 140, 0.35));
+}
 .day .num {
   position: relative;
   z-index: 1;

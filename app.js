@@ -288,7 +288,7 @@
       inner.className = 'day-cell';
       inner.dataset.date = key;
       if (entry) {
-        inner.innerHTML = `<span class="emoji">${emojiFor(entry.level)}</span>`;
+        inner.innerHTML = `<span class="emoji l${entry.level}">${emojiFor(entry.level)}</span>`;
       } else {
         inner.textContent = String(date.getDate());
       }

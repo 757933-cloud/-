@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#E8788C">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Наш календарь">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <title>Наш календарь</title>
+</head>
+<body>
+
+  <!-- PIN-экран -->
+  <section id="screen-lock" class="screen active">
+    <div class="lock-wrap">
+      <div class="lock-logo">❤️‍🔥</div>
+      <h1 class="lock-title" id="lock-title">Введите PIN-код</h1>
+      <p class="lock-hint" id="lock-hint">4 цифры</p>
+      <div class="pin-dots" id="pin-dots">
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="pin-keypad" id="pin-keypad">
+        <button type="button" data-key="1">1</button>
+        <button type="button" data-key="2">2</button>
+        <button type="button" data-key="3">3</button>
+        <button type="button" data-key="4">4</button>
+        <button type="button" data-key="5">5</button>
+        <button type="button" data-key="6">6</button>
+        <button type="button" data-key="7">7</button>
+        <button type="button" data-key="8">8</button>
+        <button type="button" data-key="9">9</button>
+        <button type="button" data-key="reset" class="key-secondary" id="pin-reset" hidden>Сбросить</button>
+        <button type="button" data-key="0">0</button>
+        <button type="button" data-key="back" class="key-secondary" aria-label="Стереть">⌫</button>
+      </div>
+      <p class="lock-error" id="lock-error"></p>
+    </div>
+  </section>
+
+  <!-- Календарь -->
+  <section id="screen-calendar" class="screen">
+    <header class="topbar">
+      <div class="view-toggle" role="tablist" aria-label="Вид">
+        <button type="button" class="toggle-btn active" data-view="month" role="tab">Месяц</button>
+        <button type="button" class="toggle-btn" data-view="year" role="tab">Год</button>
+      </div>
+    </header>
+    <div class="period-nav">
+      <button type="button" class="nav-arrow" id="nav-prev" aria-label="Назад">‹</button>
+      <h2 class="period-title" id="period-title">—</h2>
+      <button type="button" class="nav-arrow" id="nav-next" aria-label="Вперёд">›</button>
+    </div>
+    <div class="weekdays" id="weekdays">
+      <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Вс</span>
+    </div>
+    <div class="calendar-month" id="calendar-month"></div>
+    <div class="calendar-year" id="calendar-year" hidden></div>
+    <div class="legend">
+      <span><i class="dot l1"></i>🤍 была</span>
+      <span><i class="dot l2"></i>🩷 хорошая</span>
+      <span><i class="dot l3"></i>❤️‍🔥 восхит.</span>
+      <span><i class="dot l4"></i>провал</span>
+      <span><span class="legend-cycle">♀</span> красный день</span>
+    </div>
+  </section>
+
+  <!-- Статистика -->
+  <section id="screen-stats" class="screen">
+    <header class="topbar"><h2 class="topbar-title">Статистика</h2></header>
+    <div class="stats-wrap">
+      <div class="stat-card">
+        <div class="stat-label">В этом месяце</div>
+        <div class="stat-value" id="stat-month">0</div>
+        <div class="stat-sub" id="stat-month-sub"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">За год</div>
+        <div class="stat-value" id="stat-year">0</div>
+        <div class="stat-sub" id="stat-year-sub"></div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">По уровням (год)</div>
+        <div class="levels-row">
+          <div class="lvl"><span class="lvl-icon">🤍</span><span class="lvl-num" id="stat-l1">0</span></div>
+          <div class="lvl"><span class="lvl-icon">🩷</span><span class="lvl-num" id="stat-l2">0</span></div>
+          <div class="lvl"><span class="lvl-icon">❤️‍🔥</span><span class="lvl-num" id="stat-l3">0</span></div>
+          <div class="lvl"><span class="lvl-icon"><span class="fail-circle small"></span></span><span class="lvl-num" id="stat-l4">0</span></div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Средний интервал (год)</div>
+        <div class="interval-row">
+          <div class="interval-col">
+            <div class="stat-value" id="stat-interval">—</div>
+            <div class="stat-sub">между близостями</div>
+          </div>
+          <div class="interval-col alt">
+            <div class="stat-value" id="stat-interval-alt">—</div>
+            <div class="stat-sub">если бы ⚫ были сердечками</div>
+          </div>
+        </div>
+      </div>
+      <div class="stat-card ai-card">
+        <div class="stat-label">✨ ИИ-аналитика</div>
+        <div class="ai-buttons">
+          <button type="button" class="ai-btn" data-period="week">За неделю</button>
+          <button type="button" class="ai-btn" data-period="month">За месяц</button>
+          <button type="button" class="ai-btn" data-period="year">За год</button>
+        </div>
+        <div class="ai-output" id="ai-output" hidden>
+          <div class="ai-period" id="ai-period"></div>
+          <div class="ai-loader" id="ai-loader" hidden>
+            <span class="dot-loader"></span><span class="dot-loader"></span><span class="dot-loader"></span>
+          </div>
+          <div class="ai-text" id="ai-text"></div>
+          <div class="ai-actions" id="ai-actions" hidden>
+            <button type="button" class="btn-ghost" id="btn-ai-close">Закрыть</button>
+            <button type="button" class="btn-primary" id="btn-ai-share">
+              <span style="font-size: 16px;">⬆︎</span> Поделиться
+            </button>
+          </div>
+        </div>
+        <p class="ai-hint" id="ai-hint">Введите ключ Claude API в Настройках, чтобы получать осмысленные разборы.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Настройки -->
+  <section id="screen-settings" class="screen">
+    <header class="topbar"><h2 class="topbar-title">Настройки</h2></header>
+    <div class="settings-wrap">
+      <button type="button" class="settings-row" id="btn-change-pin">
+        <span>Сменить PIN-код</span><span class="chev">›</span>
+      </button>
+      <div class="settings-row settings-row-input">
+        <label for="api-key" class="api-key-label">
+          <span>Claude API ключ</span>
+          <small>Хранится только в этом устройстве</small>
+        </label>
+        <input type="password" id="api-key" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false">
+        <div class="api-key-actions">
+          <button type="button" id="btn-api-toggle" class="api-mini">Показать</button>
+          <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="api-mini">Получить ключ ↗</a>
+        </div>
+      </div>
+      <button type="button" class="settings-row" id="btn-export">
+        <span>Экспорт данных</span><span class="chev">↓</span>
+      </button>
+      <label class="settings-row" for="import-file">
+        <span>Импорт данных</span><span class="chev">↑</span>
+        <input type="file" id="import-file" accept="application/json" hidden>
+      </label>
+      <button type="button" class="settings-row danger" id="btn-clear">
+        <span>Очистить все данные</span><span class="chev">×</span>
+      </button>
+      <p class="settings-foot">Наш календарь · v1.0</p>
+    </div>
+  </section>
+
+  <!-- Нижнее меню -->
+  <nav class="bottom-nav" id="bottom-nav">
+    <button type="button" class="tab" data-tab="stats">
+      <span class="tab-icon">📊</span><span class="tab-label">Статистика</span>
+    </button>
+    <button type="button" class="tab active" data-tab="calendar">
+      <span class="tab-icon">📅</span><span class="tab-label">Календарь</span>
+    </button>
+    <button type="button" class="tab" data-tab="settings">
+      <span class="tab-icon">⚙️</span><span class="tab-label">Настройки</span>
+    </button>
+  </nav>
+
+  <!-- Модалка дня -->
+  <div class="modal-backdrop" id="modal-day" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-date">
+      <h3 class="modal-title" id="modal-date">—</h3>
+
+      <div class="level-buttons" id="level-buttons">
+        <button type="button" class="level-btn" data-level="1">
+          <span class="level-emoji">🤍</span>
+          <span class="level-text">Была</span>
+        </button>
+        <button type="button" class="level-btn" data-level="2">
+          <span class="level-emoji">🩷</span>
+          <span class="level-text">Хорошая</span>
+        </button>
+        <button type="button" class="level-btn" data-level="3">
+          <span class="level-emoji">❤️‍🔥</span>
+          <span class="level-text">Восхит.</span>
+        </button>
+        <button type="button" class="level-btn level-fail" data-level="4">
+          <span class="level-emoji"><span class="fail-circle"></span></span>
+          <span class="level-text">Провал</span>
+        </button>
+      </div>
+
+      <button type="button" class="cycle-toggle" data-action="toggle-cycle">
+        <span class="cycle-symbol">♀</span>
+        <span class="cycle-text">Красный день</span>
+      </button>
+
+      <div class="field">
+        <label class="field-label" for="note-husband">💬 Комментарий супруга</label>
+        <textarea id="note-husband" maxlength="400" rows="3" placeholder="Что хочешь записать?"></textarea>
+      </div>
+
+      <div class="field">
+        <label class="field-label" for="note-wife">💖 Комментарий супруги</label>
+        <textarea id="note-wife" maxlength="400" rows="3" placeholder="Что хочешь записать?"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-action="cancel">Отмена</button>
+        <button type="button" class="btn-danger" data-action="delete" hidden>Удалить</button>
+        <button type="button" class="btn-primary" data-action="save">Сохранить</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

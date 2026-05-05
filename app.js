@@ -412,12 +412,11 @@
     }
   }
 
-  // ───── Модалка дня (wizard) ─────
+  // ───── Модалка дня ─────
   const modal = document.getElementById('modal-day');
   const modalDateEl = document.getElementById('modal-date');
   const noteHusbandEl = document.getElementById('note-husband');
   const noteWifeEl = document.getElementById('note-wife');
-  let modalStep = 1;
 
   function openDayModal(date) {
     modalDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
@@ -428,7 +427,6 @@
       : { level: 0, mood: 0, noteHusband: '', noteWife: '' };
 
     modalDateEl.textContent = `${modalDate.getDate()} ${MONTHS_RU_GEN[modalDate.getMonth()]} ${modalDate.getFullYear()}`;
-    setModalStep(1);
     refreshModalUI();
     modal.querySelector('[data-action="delete"]').hidden = !existing;
     modal.hidden = false;
@@ -438,17 +436,8 @@
     modalDate = null;
     modalDraft = null;
   }
-  function setModalStep(n) {
-    modalStep = n;
-    modal.querySelectorAll('.modal-step').forEach(s => {
-      s.hidden = Number(s.dataset.step) !== n;
-    });
-    if (n === 2) setTimeout(() => noteHusbandEl.focus(), 100);
-    if (n === 3) setTimeout(() => noteWifeEl.focus(), 100);
-  }
   function refreshModalUI() {
     document.querySelectorAll('.level-btn').forEach(b => b.classList.toggle('selected', Number(b.dataset.level) === modalDraft.level));
-    document.querySelectorAll('.star').forEach(s => s.classList.toggle('filled', Number(s.dataset.mood) <= modalDraft.mood));
     noteHusbandEl.value = modalDraft.noteHusband || '';
     noteWifeEl.value = modalDraft.noteWife || '';
   }
@@ -457,13 +446,6 @@
     b.addEventListener('click', () => {
       const lvl = Number(b.dataset.level);
       modalDraft.level = (modalDraft.level === lvl) ? 0 : lvl;
-      refreshModalUI();
-    });
-  });
-  document.querySelectorAll('.star').forEach(s => {
-    s.addEventListener('click', () => {
-      const m = Number(s.dataset.mood);
-      modalDraft.mood = (modalDraft.mood === m) ? 0 : m;
       refreshModalUI();
     });
   });
@@ -476,13 +458,6 @@
     if (!action) return;
     switch (action) {
       case 'cancel': closeModal(); break;
-      case 'next1':
-        if (!modalDraft.level) { alert('Сначала выберите уровень.'); return; }
-        setModalStep(2);
-        break;
-      case 'back2': setModalStep(1); break;
-      case 'next2': setModalStep(3); break;
-      case 'back3': setModalStep(2); break;
       case 'save': saveDayEntry(); break;
       case 'delete': deleteDayEntry(); break;
     }
@@ -494,7 +469,6 @@
     const key = isoDate(modalDate);
     state.entries[key] = {
       level: modalDraft.level,
-      mood: modalDraft.mood || 0,
       noteHusband: (modalDraft.noteHusband || '').trim().slice(0, 400),
       noteWife: (modalDraft.noteWife || '').trim().slice(0, 400),
     };
@@ -536,10 +510,6 @@
     document.getElementById('stat-year-sub').textContent = inYearClose.length ? `${y}` : '';
 
     const counts = {1:0, 2:0, 3:0, 4:0};
-    let moodSum = 0, moodCount = 0;
-    inYearClose.forEach(({entry}) => {
-      if (entry.mood) { moodSum += entry.mood; moodCount++; }
-    });
     inYear.forEach(({entry}) => {
       counts[entry.level] = (counts[entry.level] || 0) + 1;
     });
@@ -558,16 +528,6 @@
     };
     document.getElementById('stat-interval').textContent = calcInterval(inYearClose);
     document.getElementById('stat-interval-alt').textContent = calcInterval(inYear);
-
-    if (moodCount) {
-      const avg = moodSum / moodCount;
-      document.getElementById('stat-mood').textContent = avg.toFixed(1);
-      const stars = '★'.repeat(Math.round(avg)) + '☆'.repeat(5 - Math.round(avg));
-      document.getElementById('stat-mood-stars').textContent = stars;
-    } else {
-      document.getElementById('stat-mood').textContent = '—';
-      document.getElementById('stat-mood-stars').textContent = '';
-    }
   }
 
   // ───── Нижнее меню ─────
@@ -674,7 +634,6 @@
     if (!list.length) return '(записей нет)';
     return list.map(e => {
       const parts = [`${e.date}: ${levelLabel(e.level)}`];
-      if (e.mood) parts.push(`настроение ${e.mood}/5`);
       if (e.noteHusband && e.noteHusband.trim()) parts.push(`супруг: «${e.noteHusband.trim()}»`);
       if (e.noteWife && e.noteWife.trim()) parts.push(`супруга: «${e.noteWife.trim()}»`);
       return '- ' + parts.join('; ');
@@ -725,12 +684,10 @@
 
     const close = list.filter(e => e.level !== 4);
     const fails = list.filter(e => e.level === 4);
-    const avgMood = close.length ? (close.reduce((s, e) => s + (e.mood || 0), 0) / close.length).toFixed(1) : '—';
 
     const prompt = `Ты — деликатный и тёплый аналитик отношений пары. Тебе передали личный календарь близости супружеской пары за период «${label}».
 Числовая сводка:
 - Всего записей: ${list.length}, из них близостей: ${close.length}, провалов: ${fails.length}
-- Среднее настроение по близостям: ${avgMood}/5
 
 Записи:
 ${formatEntriesForPrompt(list)}

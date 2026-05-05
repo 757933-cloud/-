@@ -104,12 +104,6 @@
           </div>
         </div>
       </div>
-      <div class="stat-card">
-        <div class="stat-label">Среднее настроение (год)</div>
-        <div class="stat-value" id="stat-mood">—</div>
-        <div class="stat-sub" id="stat-mood-stars"></div>
-      </div>
-
       <div class="stat-card ai-card">
         <div class="stat-label">✨ ИИ-аналитика</div>
         <div class="ai-buttons">
@@ -185,67 +179,39 @@
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-date">
       <h3 class="modal-title" id="modal-date">—</h3>
 
-      <!-- Шаг 1: уровень + настроение -->
-      <div class="modal-step" data-step="1">
-        <div class="level-buttons" id="level-buttons">
-          <button type="button" class="level-btn" data-level="1">
-            <span class="level-emoji">🤍</span>
-            <span class="level-text">Была</span>
-          </button>
-          <button type="button" class="level-btn" data-level="2">
-            <span class="level-emoji">🩷</span>
-            <span class="level-text">Хорошая</span>
-          </button>
-          <button type="button" class="level-btn" data-level="3">
-            <span class="level-emoji">❤️‍🔥</span>
-            <span class="level-text">Восхит.</span>
-          </button>
-          <button type="button" class="level-btn level-fail" data-level="4">
-            <span class="level-emoji"><span class="fail-circle"></span></span>
-            <span class="level-text">Провал</span>
-          </button>
-        </div>
-
-        <div class="field">
-          <label class="field-label">Настроение</label>
-          <div class="stars" id="stars" role="radiogroup" aria-label="Настроение">
-            <button type="button" class="star" data-mood="1" role="radio">★</button>
-            <button type="button" class="star" data-mood="2" role="radio">★</button>
-            <button type="button" class="star" data-mood="3" role="radio">★</button>
-            <button type="button" class="star" data-mood="4" role="radio">★</button>
-            <button type="button" class="star" data-mood="5" role="radio">★</button>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button type="button" class="btn-ghost" data-action="cancel">Отмена</button>
-          <button type="button" class="btn-danger" data-action="delete" hidden>Удалить</button>
-          <button type="button" class="btn-primary" data-action="next1">Далее →</button>
-        </div>
+      <div class="level-buttons" id="level-buttons">
+        <button type="button" class="level-btn" data-level="1">
+          <span class="level-emoji">🤍</span>
+          <span class="level-text">Была</span>
+        </button>
+        <button type="button" class="level-btn" data-level="2">
+          <span class="level-emoji">🩷</span>
+          <span class="level-text">Хорошая</span>
+        </button>
+        <button type="button" class="level-btn" data-level="3">
+          <span class="level-emoji">❤️‍🔥</span>
+          <span class="level-text">Восхит.</span>
+        </button>
+        <button type="button" class="level-btn level-fail" data-level="4">
+          <span class="level-emoji"><span class="fail-circle"></span></span>
+          <span class="level-text">Провал</span>
+        </button>
       </div>
 
-      <!-- Шаг 2: заметка супруга -->
-      <div class="modal-step" data-step="2" hidden>
-        <div class="field">
-          <label class="field-label">💬 Комментарий супруга</label>
-          <textarea id="note-husband" maxlength="400" rows="4" placeholder="Что хочешь записать?"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-ghost" data-action="back2">← Назад</button>
-          <button type="button" class="btn-primary" data-action="next2">Далее →</button>
-        </div>
+      <div class="field">
+        <label class="field-label" for="note-husband">💬 Комментарий супруга</label>
+        <textarea id="note-husband" maxlength="400" rows="3" placeholder="Что хочешь записать?"></textarea>
       </div>
 
-      <!-- Шаг 3: заметка супруги -->
-      <div class="modal-step" data-step="3" hidden>
-        <div class="field">
-          <label class="field-label">💖 Комментарий супруги</label>
-          <textarea id="note-wife" maxlength="400" rows="4" placeholder="Что хочешь записать?"></textarea>
-        </div>
-        <div class="modal-actions">
-          <button type="button" class="btn-ghost" data-action="back3">← Назад</button>
-          <button type="button" class="btn-primary" data-action="save">Сохранить</button>
-        </div>
+      <div class="field">
+        <label class="field-label" for="note-wife">💖 Комментарий супруги</label>
+        <textarea id="note-wife" maxlength="400" rows="3" placeholder="Что хочешь записать?"></textarea>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" data-action="cancel">Отмена</button>
+        <button type="button" class="btn-danger" data-action="delete" hidden>Удалить</button>
+        <button type="button" class="btn-primary" data-action="save">Сохранить</button>
       </div>
     </div>
   </div>

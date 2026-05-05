@@ -332,23 +332,32 @@
       cell.className = 'day';
       if (isOther) cell.classList.add('other');
       if (isToday) cell.classList.add('today');
-      if (entry) cell.classList.add('has-entry');
+      const hasMark = entry && entry.level;
+      if (hasMark) cell.classList.add('has-entry');
       else cell.classList.add('empty');
 
       const inner = document.createElement('button');
       inner.type = 'button';
       inner.className = 'day-cell';
       inner.dataset.date = key;
-      if (entry) {
+      if (hasMark) {
         inner.innerHTML = renderDayMark(entry.level);
       } else {
         inner.textContent = String(date.getDate());
       }
       if (entry) {
-        const num = document.createElement('span');
-        num.className = 'num';
-        num.textContent = String(date.getDate());
-        inner.appendChild(num);
+        if (hasMark) {
+          const num = document.createElement('span');
+          num.className = 'num';
+          num.textContent = String(date.getDate());
+          inner.appendChild(num);
+        }
+        if (entry.cycle) {
+          const cm = document.createElement('span');
+          cm.className = 'cycle-mark';
+          cm.textContent = '♀';
+          inner.appendChild(cm);
+        }
         const hasNote = (entry.noteHusband && entry.noteHusband.trim()) || (entry.noteWife && entry.noteWife.trim()) || (entry.note && entry.note.trim());
         if (hasNote) {
           const nd = document.createElement('span');
@@ -423,8 +432,8 @@
     const key = isoDate(modalDate);
     const existing = state.entries[key];
     modalDraft = existing
-      ? { ...existing, noteHusband: existing.noteHusband || '', noteWife: existing.noteWife || '' }
-      : { level: 0, mood: 0, noteHusband: '', noteWife: '' };
+      ? { ...existing, noteHusband: existing.noteHusband || '', noteWife: existing.noteWife || '', cycle: !!existing.cycle }
+      : { level: 0, noteHusband: '', noteWife: '', cycle: false };
 
     modalDateEl.textContent = `${modalDate.getDate()} ${MONTHS_RU_GEN[modalDate.getMonth()]} ${modalDate.getFullYear()}`;
     refreshModalUI();
@@ -440,6 +449,8 @@
     document.querySelectorAll('.level-btn').forEach(b => b.classList.toggle('selected', Number(b.dataset.level) === modalDraft.level));
     noteHusbandEl.value = modalDraft.noteHusband || '';
     noteWifeEl.value = modalDraft.noteWife || '';
+    const cycleBtn = modal.querySelector('.cycle-toggle');
+    if (cycleBtn) cycleBtn.classList.toggle('active', !!modalDraft.cycle);
   }
 
   document.querySelectorAll('.level-btn').forEach(b => {
@@ -460,17 +471,25 @@
       case 'cancel': closeModal(); break;
       case 'save': saveDayEntry(); break;
       case 'delete': deleteDayEntry(); break;
+      case 'toggle-cycle':
+        modalDraft.cycle = !modalDraft.cycle;
+        refreshModalUI();
+        break;
     }
   });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
 
   function saveDayEntry() {
-    if (!modalDraft.level) { alert('Сначала выберите уровень.'); return; }
+    if (!modalDraft.level && !modalDraft.cycle) {
+      alert('Выберите уровень или отметьте красный день.');
+      return;
+    }
     const key = isoDate(modalDate);
     state.entries[key] = {
-      level: modalDraft.level,
+      level: modalDraft.level || 0,
       noteHusband: (modalDraft.noteHusband || '').trim().slice(0, 400),
       noteWife: (modalDraft.noteWife || '').trim().slice(0, 400),
+      cycle: !!modalDraft.cycle,
     };
     saveState();
     closeModal();
@@ -633,7 +652,9 @@
   function formatEntriesForPrompt(list) {
     if (!list.length) return '(записей нет)';
     return list.map(e => {
-      const parts = [`${e.date}: ${levelLabel(e.level)}`];
+      const head = e.level ? levelLabel(e.level) : '(без отметки уровня)';
+      const parts = [`${e.date}: ${head}`];
+      if (e.cycle) parts.push('♀ красный день у супруги');
       if (e.noteHusband && e.noteHusband.trim()) parts.push(`супруг: «${e.noteHusband.trim()}»`);
       if (e.noteWife && e.noteWife.trim()) parts.push(`супруга: «${e.noteWife.trim()}»`);
       return '- ' + parts.join('; ');
@@ -682,12 +703,14 @@
       return;
     }
 
-    const close = list.filter(e => e.level !== 4);
+    const close = list.filter(e => e.level && e.level !== 4);
     const fails = list.filter(e => e.level === 4);
+    const cycleDays = list.filter(e => e.cycle);
 
-    const prompt = `Ты — деликатный и тёплый аналитик отношений пары. Тебе передали личный календарь близости супружеской пары за период «${label}».
+    const prompt = `Ты — деликатный и тёплый аналитик отношений пары. Тебе передали личный календарь близости супружеской пары за период «${label}». В записях встречается метка «♀ красный день у супруги» — это менструальные дни. Учитывай их при анализе циклов, физиологии и рекомендаций для супруги.
+
 Числовая сводка:
-- Всего записей: ${list.length}, из них близостей: ${close.length}, провалов: ${fails.length}
+- Всего записей: ${list.length}, из них близостей: ${close.length}, провалов: ${fails.length}, красных дней: ${cycleDays.length}
 
 Записи:
 ${formatEntriesForPrompt(list)}
@@ -712,7 +735,7 @@ ${formatEntriesForPrompt(list)}
 **Маленькая идея на этой неделе**
 Одно конкретное действие, которое они могут попробовать вместе.
 
-Пиши коротко, по делу, без воды. Заголовки выделяй жирным с помощью **текст**. Не используй обращение «вы» — обращайся к каждому отдельно. Не давай медицинских или психотерапевтических советов.`;
+${cycleDays.length >= 2 ? '**Цикл и физиология супруги**\nЕсли по красным дням можно сделать наблюдение о ритме цикла, длине, корреляции с настроением или близостью — добавь короткий блок (2-4 предложения). Без диагнозов и медицины.\n\n' : ''}Пиши коротко, по делу, без воды. Заголовки выделяй жирным с помощью **текст**. Не используй обращение «вы» — обращайся к каждому отдельно. Не давай медицинских или психотерапевтических советов.`;
 
     try {
       const res = await fetch('https://api.anthropic.com/v1/messages', {

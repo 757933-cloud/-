@@ -22,11 +22,29 @@
       if (!raw) return { entries: {}, pinHash: null, createdAt: new Date().toISOString() };
       const data = JSON.parse(raw);
       if (!data.entries) data.entries = {};
+      // Миграция: note → noteHusband
+      let migrated = false;
+      for (const k of Object.keys(data.entries)) {
+        const e = data.entries[k];
+        if (e && typeof e === 'object' && e.note !== undefined && e.noteHusband === undefined && e.noteWife === undefined) {
+          e.noteHusband = e.note || '';
+          e.noteWife = '';
+          delete e.note;
+          migrated = true;
+        }
+      }
+      if (migrated) localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
       return data;
     } catch { return { entries: {}, pinHash: null, createdAt: new Date().toISOString() }; }
   }
   function saveState() {
+    // API-ключ хранится отдельно, не попадает в основной state
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+  function getApiKey() { return localStorage.getItem('couples_calendar_apikey') || ''; }
+  function setApiKey(v) {
+    if (v) localStorage.setItem('couples_calendar_apikey', v);
+    else localStorage.removeItem('couples_calendar_apikey');
   }
 
   // ───── Утилиты дат ─────
@@ -331,7 +349,8 @@
         num.className = 'num';
         num.textContent = String(date.getDate());
         inner.appendChild(num);
-        if (entry.note && entry.note.trim()) {
+        const hasNote = (entry.noteHusband && entry.noteHusband.trim()) || (entry.noteWife && entry.noteWife.trim()) || (entry.note && entry.note.trim());
+        if (hasNote) {
           const nd = document.createElement('span');
           nd.className = 'note-dot';
           inner.appendChild(nd);
@@ -393,23 +412,25 @@
     }
   }
 
-  // ───── Модалка дня ─────
+  // ───── Модалка дня (wizard) ─────
   const modal = document.getElementById('modal-day');
   const modalDateEl = document.getElementById('modal-date');
-  const noteEl = document.getElementById('note');
-  const btnSave = document.getElementById('btn-save');
-  const btnDelete = document.getElementById('btn-delete');
-  const btnCancel = document.getElementById('btn-cancel');
+  const noteHusbandEl = document.getElementById('note-husband');
+  const noteWifeEl = document.getElementById('note-wife');
+  let modalStep = 1;
 
   function openDayModal(date) {
     modalDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
     const key = isoDate(modalDate);
     const existing = state.entries[key];
-    modalDraft = existing ? { ...existing } : { level: 0, mood: 0, note: '' };
+    modalDraft = existing
+      ? { ...existing, noteHusband: existing.noteHusband || '', noteWife: existing.noteWife || '' }
+      : { level: 0, mood: 0, noteHusband: '', noteWife: '' };
 
     modalDateEl.textContent = `${modalDate.getDate()} ${MONTHS_RU_GEN[modalDate.getMonth()]} ${modalDate.getFullYear()}`;
+    setModalStep(1);
     refreshModalUI();
-    btnDelete.hidden = !existing;
+    modal.querySelector('[data-action="delete"]').hidden = !existing;
     modal.hidden = false;
   }
   function closeModal() {
@@ -417,10 +438,19 @@
     modalDate = null;
     modalDraft = null;
   }
+  function setModalStep(n) {
+    modalStep = n;
+    modal.querySelectorAll('.modal-step').forEach(s => {
+      s.hidden = Number(s.dataset.step) !== n;
+    });
+    if (n === 2) setTimeout(() => noteHusbandEl.focus(), 100);
+    if (n === 3) setTimeout(() => noteWifeEl.focus(), 100);
+  }
   function refreshModalUI() {
     document.querySelectorAll('.level-btn').forEach(b => b.classList.toggle('selected', Number(b.dataset.level) === modalDraft.level));
     document.querySelectorAll('.star').forEach(s => s.classList.toggle('filled', Number(s.dataset.mood) <= modalDraft.mood));
-    noteEl.value = modalDraft.note || '';
+    noteHusbandEl.value = modalDraft.noteHusband || '';
+    noteWifeEl.value = modalDraft.noteWife || '';
   }
 
   document.querySelectorAll('.level-btn').forEach(b => {
@@ -437,34 +467,48 @@
       refreshModalUI();
     });
   });
-  noteEl.addEventListener('input', () => { modalDraft.note = noteEl.value; });
+  noteHusbandEl.addEventListener('input', () => { modalDraft.noteHusband = noteHusbandEl.value; });
+  noteWifeEl.addEventListener('input', () => { modalDraft.noteWife = noteWifeEl.value; });
 
-  btnCancel.addEventListener('click', closeModal);
-  modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) { closeModal(); return; }
+    const action = e.target.closest('[data-action]')?.dataset.action;
+    if (!action) return;
+    switch (action) {
+      case 'cancel': closeModal(); break;
+      case 'next1':
+        if (!modalDraft.level) { alert('Сначала выберите уровень.'); return; }
+        setModalStep(2);
+        break;
+      case 'back2': setModalStep(1); break;
+      case 'next2': setModalStep(3); break;
+      case 'back3': setModalStep(2); break;
+      case 'save': saveDayEntry(); break;
+      case 'delete': deleteDayEntry(); break;
+    }
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) closeModal(); });
 
-  btnSave.addEventListener('click', () => {
-    if (!modalDraft.level) {
-      alert('Выберите уровень или нажмите «Удалить».');
-      return;
-    }
+  function saveDayEntry() {
+    if (!modalDraft.level) { alert('Сначала выберите уровень.'); return; }
     const key = isoDate(modalDate);
     state.entries[key] = {
       level: modalDraft.level,
       mood: modalDraft.mood || 0,
-      note: (modalDraft.note || '').trim().slice(0, 200),
+      noteHusband: (modalDraft.noteHusband || '').trim().slice(0, 400),
+      noteWife: (modalDraft.noteWife || '').trim().slice(0, 400),
     };
     saveState();
     closeModal();
     renderCalendar();
-  });
-  btnDelete.addEventListener('click', () => {
+  }
+  function deleteDayEntry() {
     const key = isoDate(modalDate);
     delete state.entries[key];
     saveState();
     closeModal();
     renderCalendar();
-  });
+  }
 
   // ───── Статистика ─────
   function renderStats() {
@@ -588,6 +632,206 @@
     renderCalendar();
     renderStats();
   });
+
+  // API-ключ
+  const apiKeyInput = document.getElementById('api-key');
+  const apiToggleBtn = document.getElementById('btn-api-toggle');
+  apiKeyInput.value = getApiKey();
+  apiKeyInput.addEventListener('change', () => setApiKey(apiKeyInput.value.trim()));
+  apiKeyInput.addEventListener('blur', () => setApiKey(apiKeyInput.value.trim()));
+  apiToggleBtn.addEventListener('click', () => {
+    if (apiKeyInput.type === 'password') {
+      apiKeyInput.type = 'text';
+      apiToggleBtn.textContent = 'Скрыть';
+    } else {
+      apiKeyInput.type = 'password';
+      apiToggleBtn.textContent = 'Показать';
+    }
+  });
+
+  // ───── ИИ-аналитика ─────
+  const aiOutput = document.getElementById('ai-output');
+  const aiPeriodEl = document.getElementById('ai-period');
+  const aiLoader = document.getElementById('ai-loader');
+  const aiText = document.getElementById('ai-text');
+  const aiActions = document.getElementById('ai-actions');
+  const aiHint = document.getElementById('ai-hint');
+
+  function entriesInRange(from, to) {
+    const out = [];
+    for (const [key, entry] of Object.entries(state.entries)) {
+      const d = new Date(key + 'T00:00:00');
+      if (d >= from && d <= to) out.push({ date: key, ...entry });
+    }
+    return out.sort((a, b) => a.date.localeCompare(b.date));
+  }
+
+  function levelLabel(l) {
+    return l === 1 ? '🤍 была' : l === 2 ? '🩷 хорошая' : l === 3 ? '❤️‍🔥 восхитительная' : l === 4 ? '⚫ провал' : '—';
+  }
+
+  function formatEntriesForPrompt(list) {
+    if (!list.length) return '(записей нет)';
+    return list.map(e => {
+      const parts = [`${e.date}: ${levelLabel(e.level)}`];
+      if (e.mood) parts.push(`настроение ${e.mood}/5`);
+      if (e.noteHusband && e.noteHusband.trim()) parts.push(`супруг: «${e.noteHusband.trim()}»`);
+      if (e.noteWife && e.noteWife.trim()) parts.push(`супруга: «${e.noteWife.trim()}»`);
+      return '- ' + parts.join('; ');
+    }).join('\n');
+  }
+
+  function periodRange(period) {
+    const now = new Date();
+    let from, to, label;
+    if (period === 'week') {
+      to = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      from = new Date(to);
+      from.setDate(from.getDate() - 6);
+      label = 'Последние 7 дней';
+    } else if (period === 'month') {
+      from = new Date(now.getFullYear(), now.getMonth(), 1);
+      to = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+      label = `${MONTHS_RU[now.getMonth()]} ${now.getFullYear()}`;
+    } else {
+      from = new Date(now.getFullYear(), 0, 1);
+      to = new Date(now.getFullYear(), 11, 31);
+      label = `${now.getFullYear()} год`;
+    }
+    return { from, to, label };
+  }
+
+  async function runAiAnalysis(period) {
+    const apiKey = getApiKey();
+    if (!apiKey) {
+      alert('Введите Claude API ключ в Настройках.');
+      return;
+    }
+    const { from, to, label } = periodRange(period);
+    const list = entriesInRange(from, to);
+
+    aiOutput.hidden = false;
+    aiPeriodEl.textContent = label;
+    aiActions.hidden = true;
+    aiText.textContent = '';
+    aiLoader.hidden = false;
+
+    if (!list.length) {
+      aiLoader.hidden = true;
+      aiText.textContent = 'За выбранный период записей нет — добавьте отметки и попробуйте снова.';
+      aiActions.hidden = false;
+      return;
+    }
+
+    const close = list.filter(e => e.level !== 4);
+    const fails = list.filter(e => e.level === 4);
+    const avgMood = close.length ? (close.reduce((s, e) => s + (e.mood || 0), 0) / close.length).toFixed(1) : '—';
+
+    const prompt = `Ты — деликатный и тёплый аналитик отношений пары. Тебе передали личный календарь близости супружеской пары за период «${label}».
+Числовая сводка:
+- Всего записей: ${list.length}, из них близостей: ${close.length}, провалов: ${fails.length}
+- Среднее настроение по близостям: ${avgMood}/5
+
+Записи:
+${formatEntriesForPrompt(list)}
+
+Сделай разбор на русском языке, тепло и без морализаторства. Структура:
+
+**Картина периода**
+2-3 предложения о том, как прошёл период, какие настроения и темы повторяются.
+
+**Что работает (близости и тёплые моменты)**
+3-5 конкретных наблюдений с упоминанием реальных деталей из заметок (если есть).
+
+**Что мешало (если были провалы или плохое настроение)**
+2-4 наблюдения. Без обвинений — описывай по-человечески.
+
+**Совет супругу 💬**
+2-3 коротких, конкретных, бережных совета — что попробовать сделать в следующий период именно с его стороны.
+
+**Совет супруге 💖**
+2-3 коротких, конкретных, бережных совета — именно с её стороны.
+
+**Маленькая идея на этой неделе**
+Одно конкретное действие, которое они могут попробовать вместе.
+
+Пиши коротко, по делу, без воды. Заголовки выделяй жирным с помощью **текст**. Не используй обращение «вы» — обращайся к каждому отдельно. Не давай медицинских или психотерапевтических советов.`;
+
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'x-api-key': apiKey,
+          'anthropic-version': '2023-06-01',
+          'anthropic-dangerous-direct-browser-access': 'true',
+        },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 1500,
+          messages: [{ role: 'user', content: prompt }],
+        }),
+      });
+      const data = await res.json();
+      aiLoader.hidden = true;
+      if (!res.ok) {
+        const msg = data?.error?.message || `Ошибка ${res.status}`;
+        aiText.textContent = 'Не удалось получить разбор: ' + msg;
+        aiActions.hidden = false;
+        return;
+      }
+      const text = (data.content && data.content[0] && data.content[0].text) || '(пустой ответ)';
+      aiText.innerHTML = mdToHtml(text);
+      aiText.dataset.raw = text;
+      aiActions.hidden = false;
+    } catch (err) {
+      aiLoader.hidden = true;
+      aiText.textContent = 'Сбой запроса: ' + (err && err.message ? err.message : 'неизвестно');
+      aiActions.hidden = false;
+    }
+  }
+
+  function mdToHtml(s) {
+    // Минимальный markdown → HTML: **bold**, заголовки и списки
+    const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    let html = esc(s);
+    html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+    html = html.split(/\n\n+/).map(p => {
+      const trimmed = p.trim();
+      if (/^(- |• )/m.test(trimmed)) {
+        const items = trimmed.split('\n').map(l => l.replace(/^(- |• )/, '').trim()).filter(Boolean);
+        return '<ul>' + items.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+      }
+      return '<p>' + trimmed.replace(/\n/g, '<br>') + '</p>';
+    }).join('');
+    return html;
+  }
+
+  document.querySelectorAll('.ai-btn').forEach(b => {
+    b.addEventListener('click', () => runAiAnalysis(b.dataset.period));
+  });
+  document.getElementById('btn-ai-close').addEventListener('click', () => { aiOutput.hidden = true; });
+  document.getElementById('btn-ai-share').addEventListener('click', async () => {
+    const text = aiText.dataset.raw || aiText.textContent;
+    const title = `Наш календарь — ИИ-аналитика, ${aiPeriodEl.textContent}`;
+    if (navigator.share) {
+      try { await navigator.share({ title, text }); } catch {}
+    } else {
+      try {
+        await navigator.clipboard.writeText(text);
+        alert('Скопировано в буфер обмена.');
+      } catch {
+        alert('Не удалось поделиться. Скопируйте текст вручную.');
+      }
+    }
+  });
+
+  // Обновление подсказки про API key
+  function updateAiHint() {
+    aiHint.hidden = !!getApiKey();
+  }
+  apiKeyInput.addEventListener('input', updateAiHint);
+  updateAiHint();
 
   // ───── Service Worker ─────
   if ('serviceWorker' in navigator) {

@@ -576,7 +576,20 @@
   // ───── Service Worker ─────
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('sw.js').catch(() => {});
+      navigator.serviceWorker.register('sw.js').then((reg) => {
+        reg.addEventListener('updatefound', () => {
+          const nw = reg.installing;
+          if (!nw) return;
+          nw.addEventListener('statechange', () => {
+            if (nw.state === 'installed' && navigator.serviceWorker.controller) {
+              // новая версия установлена — перезагружаемся
+              window.location.reload();
+            }
+          });
+        });
+        // периодически проверяем апдейты
+        setInterval(() => reg.update().catch(() => {}), 60 * 1000);
+      }).catch(() => {});
     });
   }
 

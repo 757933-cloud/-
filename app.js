@@ -504,15 +504,16 @@
     document.getElementById('stat-l3').textContent = counts[3];
     document.getElementById('stat-l4').textContent = counts[4];
 
-    // Средний интервал по году — только между близостями
-    const dates = inYearClose.map(({key}) => new Date(key + 'T00:00:00')).sort((a, b) => a - b);
-    let interval = '—';
-    if (dates.length >= 2) {
+    // Средний интервал по году
+    const calcInterval = (list) => {
+      const dates = list.map(({key}) => new Date(key + 'T00:00:00')).sort((a, b) => a - b);
+      if (dates.length < 2) return '—';
       let sum = 0;
       for (let i = 1; i < dates.length; i++) sum += (dates[i] - dates[i-1]) / 86400000;
-      interval = (sum / (dates.length - 1)).toFixed(1).replace('.0', '');
-    }
-    document.getElementById('stat-interval').textContent = interval;
+      return (sum / (dates.length - 1)).toFixed(1).replace('.0', '');
+    };
+    document.getElementById('stat-interval').textContent = calcInterval(inYearClose);
+    document.getElementById('stat-interval-alt').textContent = calcInterval(inYear);
 
     if (moodCount) {
       const avg = moodSum / moodCount;

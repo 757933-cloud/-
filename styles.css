@@ -289,6 +289,19 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
 .stat-value { font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1.1; }
 .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
 .levels-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+.interval-row {
+  display: flex;
+  align-items: stretch;
+  gap: 14px;
+  margin-top: 4px;
+}
+.interval-col { flex: 1; min-width: 0; }
+.interval-col.alt {
+  border-left: 1px solid var(--line);
+  padding-left: 14px;
+}
+.interval-col.alt .stat-value { color: var(--muted); font-size: 26px; }
+.interval-col .stat-sub { margin-top: 2px; font-size: 11px; line-height: 1.3; }
 .lvl { display: flex; flex-direction: column; align-items: center; }
 .lvl-icon { font-size: 24px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; height: 28px; }
 .lvl-num { font-size: 22px; font-weight: 700; margin-top: 4px; color: var(--text); }

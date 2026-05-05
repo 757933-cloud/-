@@ -482,24 +482,30 @@
       }
     }
 
-    document.getElementById('stat-month').textContent = inMonth.length;
-    document.getElementById('stat-month-sub').textContent = inMonth.length ? `${MONTHS_RU[m]} ${y}` : '';
-    document.getElementById('stat-year').textContent = inYear.length;
-    document.getElementById('stat-year-sub').textContent = inYear.length ? `${y}` : '';
+    // Близости — только уровни 1..3 (провалы считаются отдельно)
+    const inMonthClose = inMonth.filter(({entry}) => entry.level !== 4);
+    const inYearClose  = inYear.filter(({entry}) => entry.level !== 4);
+
+    document.getElementById('stat-month').textContent = inMonthClose.length;
+    document.getElementById('stat-month-sub').textContent = inMonthClose.length ? `${MONTHS_RU[m]} ${y}` : '';
+    document.getElementById('stat-year').textContent = inYearClose.length;
+    document.getElementById('stat-year-sub').textContent = inYearClose.length ? `${y}` : '';
 
     const counts = {1:0, 2:0, 3:0, 4:0};
     let moodSum = 0, moodCount = 0;
+    inYearClose.forEach(({entry}) => {
+      if (entry.mood) { moodSum += entry.mood; moodCount++; }
+    });
     inYear.forEach(({entry}) => {
       counts[entry.level] = (counts[entry.level] || 0) + 1;
-      if (entry.mood) { moodSum += entry.mood; moodCount++; }
     });
     document.getElementById('stat-l1').textContent = counts[1];
     document.getElementById('stat-l2').textContent = counts[2];
     document.getElementById('stat-l3').textContent = counts[3];
     document.getElementById('stat-l4').textContent = counts[4];
 
-    // Средний интервал по году
-    const dates = inYear.map(({key}) => new Date(key + 'T00:00:00')).sort((a, b) => a - b);
+    // Средний интервал по году — только между близостями
+    const dates = inYearClose.map(({key}) => new Date(key + 'T00:00:00')).sort((a, b) => a - b);
     let interval = '—';
     if (dates.length >= 2) {
       let sum = 0;

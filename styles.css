@@ -200,6 +200,20 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
   text-transform: capitalize;
   color: var(--text);
 }
+.mini-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-bottom: 3px;
+}
+.mini-weekdays span {
+  text-align: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
 .mini-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -209,12 +223,19 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
   aspect-ratio: 1 / 1;
   border-radius: 50%;
   background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1;
 }
-.mini-day.has { }
-.mini-day.l1 { background: #F5E0E6; }
-.mini-day.l2 { background: var(--accent-soft); }
-.mini-day.l3 { background: var(--accent); }
-.mini-day.today { outline: 1.5px solid var(--accent); outline-offset: -1.5px; }
+.mini-day.blank { color: transparent; }
+.mini-day.l1 { background: #F5E0E6; color: var(--text); }
+.mini-day.l2 { background: var(--accent-soft); color: #fff; }
+.mini-day.l3 { background: var(--accent); color: #fff; }
+.mini-day.today { outline: 1.5px solid var(--accent); outline-offset: -1.5px; font-weight: 700; }
 
 /* Легенда */
 .legend {

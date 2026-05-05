@@ -319,6 +319,15 @@
       const first = new Date(year, m, 1);
       const offset = weekdayMon(first);
       const total = daysInMonth(year, m);
+      // мини-заголовок дней недели
+      const wd = document.createElement('div');
+      wd.className = 'mini-weekdays';
+      ['П','В','С','Ч','П','С','В'].forEach(c => {
+        const s = document.createElement('span');
+        s.textContent = c;
+        wd.appendChild(s);
+      });
+      wrap.appendChild(wd);
       for (let i = 0; i < 42; i++) {
         const idx = i - offset + 1;
         const cell = document.createElement('div');
@@ -327,8 +336,11 @@
           const date = new Date(year, m, idx);
           const key = isoDate(date);
           const entry = state.entries[key];
+          cell.textContent = String(idx);
           if (entry) cell.classList.add('has', 'l' + entry.level);
           if (isSameDay(date, today)) cell.classList.add('today');
+        } else {
+          cell.classList.add('blank');
         }
         grid.appendChild(cell);
       }

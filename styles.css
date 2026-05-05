@@ -166,6 +166,25 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
   font-size: 30px;
   filter: drop-shadow(0 1px 3px rgba(232, 120, 140, 0.35));
 }
+.day .emoji.fail-mark {
+  width: 18px;
+  height: 18px;
+  background: #2A2A2A;
+  border-radius: 50%;
+  display: block;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+}
+.day .note-dot {
+  position: absolute;
+  bottom: 5px;
+  right: 7px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 1.5px var(--card);
+  pointer-events: none;
+}
 .day .num {
   position: relative;
   z-index: 1;
@@ -239,6 +258,7 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
 .mini-day.l1 { background: #F5E0E6; color: var(--text); }
 .mini-day.l2 { background: var(--accent-soft); color: #fff; }
 .mini-day.l3 { background: var(--accent); color: #fff; }
+.mini-day.l4 { background: #2A2A2A; color: #fff; }
 .mini-day.today { outline: 1.5px solid var(--accent); outline-offset: -1.5px; font-weight: 700; }
 
 /* Легенда */
@@ -255,6 +275,7 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
 .legend .dot.l1 { background: #F5E0E6; }
 .legend .dot.l2 { background: var(--accent-soft); }
 .legend .dot.l3 { background: var(--accent); }
+.legend .dot.l4 { background: #2A2A2A; }
 
 /* Статистика */
 .stats-wrap { display: flex; flex-direction: column; gap: 12px; }
@@ -267,9 +288,9 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
 .stat-label { font-size: 13px; color: var(--muted); margin-bottom: 6px; }
 .stat-value { font-size: 32px; font-weight: 700; color: var(--accent); line-height: 1.1; }
 .stat-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
-.levels-row { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; }
-.lvl { display: flex; flex-direction: column; align-items: center; flex: 1; }
-.lvl-icon { font-size: 24px; }
+.levels-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 6px; }
+.lvl { display: flex; flex-direction: column; align-items: center; }
+.lvl-icon { font-size: 24px; line-height: 1; display: inline-flex; align-items: center; justify-content: center; height: 28px; }
 .lvl-num { font-size: 22px; font-weight: 700; margin-top: 4px; color: var(--text); }
 
 /* Настройки */
@@ -399,31 +420,59 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
   text-transform: capitalize;
 }
 .level-buttons {
-  display: flex;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
   margin-bottom: 16px;
 }
 .level-btn {
-  flex: 1;
   background: var(--soft);
   border-radius: 16px;
-  padding: 14px 6px;
+  padding: 12px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text);
   transition: .15s;
   border: 2px solid transparent;
 }
-.level-btn .level-emoji { font-size: 28px; line-height: 1; }
+.level-btn .level-emoji {
+  font-size: 26px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+}
 .level-btn.selected {
   background: var(--accent);
   color: #fff;
   border-color: var(--accent);
 }
+.level-btn.level-fail.selected {
+  background: #2A2A2A;
+  border-color: #2A2A2A;
+}
 .level-btn:active { transform: scale(0.97); }
+
+/* Чёрный кружок «провал» */
+.fail-circle {
+  display: inline-block;
+  width: 24px;
+  height: 24px;
+  background: #2A2A2A;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+.fail-circle.small {
+  width: 22px;
+  height: 22px;
+}
+.level-btn.selected .fail-circle {
+  box-shadow: 0 0 0 2px #fff;
+}
 
 .field { margin-bottom: 14px; }
 .field-label {

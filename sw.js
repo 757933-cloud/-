@@ -1,4 +1,4 @@
-const CACHE = 'couples-calendar-v5';
+const CACHE = 'couples-calendar-v6';
 const ASSETS = [
   './',
   './index.html',

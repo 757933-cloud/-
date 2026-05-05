@@ -259,6 +259,10 @@
 
   // ───── Рендер календаря ─────
   function emojiFor(level) { return level === 1 ? '🤍' : level === 2 ? '🩷' : level === 3 ? '❤️‍🔥' : ''; }
+  function renderDayMark(level) {
+    if (level === 4) return `<span class="emoji fail-mark"></span>`;
+    return `<span class="emoji l${level}">${emojiFor(level)}</span>`;
+  }
 
   function renderCalendar() {
     const monthEl = document.getElementById('calendar-month');
@@ -318,16 +322,20 @@
       inner.className = 'day-cell';
       inner.dataset.date = key;
       if (entry) {
-        inner.innerHTML = `<span class="emoji l${entry.level}">${emojiFor(entry.level)}</span>`;
+        inner.innerHTML = renderDayMark(entry.level);
       } else {
         inner.textContent = String(date.getDate());
       }
-      // номер дня всегда мелким шрифтом в углу, если есть emoji
       if (entry) {
         const num = document.createElement('span');
         num.className = 'num';
         num.textContent = String(date.getDate());
         inner.appendChild(num);
+        if (entry.note && entry.note.trim()) {
+          const nd = document.createElement('span');
+          nd.className = 'note-dot';
+          inner.appendChild(nd);
+        }
       }
       inner.addEventListener('click', () => openDayModal(date));
       cell.appendChild(inner);
@@ -479,7 +487,7 @@
     document.getElementById('stat-year').textContent = inYear.length;
     document.getElementById('stat-year-sub').textContent = inYear.length ? `${y}` : '';
 
-    const counts = {1:0, 2:0, 3:0};
+    const counts = {1:0, 2:0, 3:0, 4:0};
     let moodSum = 0, moodCount = 0;
     inYear.forEach(({entry}) => {
       counts[entry.level] = (counts[entry.level] || 0) + 1;
@@ -488,6 +496,7 @@
     document.getElementById('stat-l1').textContent = counts[1];
     document.getElementById('stat-l2').textContent = counts[2];
     document.getElementById('stat-l3').textContent = counts[3];
+    document.getElementById('stat-l4').textContent = counts[4];
 
     // Средний интервал по году
     const dates = inYear.map(({key}) => new Date(key + 'T00:00:00')).sort((a, b) => a - b);

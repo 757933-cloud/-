@@ -37,7 +37,12 @@ button { font-family: inherit; cursor: pointer; border: none; background: none; 
 input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
 
 /* Экраны */
-.screen { display: none; padding: calc(var(--safe-top) + 12px) 16px 16px; }
+.screen {
+  display: none;
+  padding: calc(var(--safe-top) + 12px) 16px 16px;
+  max-width: 480px;
+  margin: 0 auto;
+}
 .screen.active { display: block; }
 
 /* Топбар */
@@ -330,8 +335,10 @@ input, textarea { font-family: inherit; font-size: 16px; color: inherit; }
 .bottom-nav {
   position: fixed;
   bottom: 0;
-  left: 0;
-  right: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 480px;
   height: calc(var(--tabbar-h) + var(--safe-bottom));
   padding-bottom: var(--safe-bottom);
   background: var(--card);
